@@ -799,6 +799,8 @@ function getVisibleRectForElement(element, alwaysByViewport) {
   // scrollXXX on html is sync with body which means overflow: hidden on body gets wrong scrollXXX.
   // We should cut this ourself.
   var bodyStyle = window.getComputedStyle(body);
+  var rect = documentElement.getBoundingClientRect();
+
   if (bodyStyle.overflowX === 'hidden') {
     documentWidth = win.innerWidth;
   }
@@ -810,19 +812,24 @@ function getVisibleRectForElement(element, alwaysByViewport) {
   if (element.style) {
     element.style.position = originalPosition;
   }
+  
   if (alwaysByViewport || isAncestorFixed(element)) {
     // Clip by viewport's size.
-    visibleRect.left = Math.max(visibleRect.left, scrollX);
-    visibleRect.top = Math.max(visibleRect.top, scrollY);
-    visibleRect.right = Math.min(visibleRect.right, scrollX + viewportWidth);
-    visibleRect.bottom = Math.min(visibleRect.bottom, scrollY + viewportHeight);
+    visibleRect.left = Math.max(visibleRect.left, scrollX, rect.left);
+    visibleRect.top = Math.max(visibleRect.top, scrollY, rect.top);
+    visibleRect.right = Math.min(visibleRect.right, scrollX + viewportWidth + visibleRect.left);
+    visibleRect.bottom = Math.min(visibleRect.bottom, scrollY + viewportHeight + visibleRect.top);
   } else {
     // Clip by document's size.
+    visibleRect.left = Math.max(visibleRect.left, scrollX, rect.left);
+    visibleRect.top = Math.max(visibleRect.top, scrollY, rect.top);
+
     var maxVisibleWidth = Math.max(documentWidth, scrollX + viewportWidth);
-    visibleRect.right = Math.min(visibleRect.right, maxVisibleWidth);
+    visibleRect.right = Math.min(visibleRect.right, maxVisibleWidth + visibleRect.left);
     var maxVisibleHeight = Math.max(documentHeight, scrollY + viewportHeight);
-    visibleRect.bottom = Math.min(visibleRect.bottom, maxVisibleHeight);
+    visibleRect.bottom = Math.min(visibleRect.bottom, maxVisibleHeight + visibleRect.top);
   }
+
   return visibleRect.top >= 0 && visibleRect.left >= 0 && visibleRect.bottom > visibleRect.top && visibleRect.right > visibleRect.left ? visibleRect : null;
 }
 
